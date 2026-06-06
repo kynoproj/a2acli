@@ -50,6 +50,7 @@ Global flags:
       --tenant string          Optional agent-owner tenant ID applied to every request
       --timeout duration       HTTP timeout (default 30s)
   -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
+  -v, --verbose                Log request URL, request body, and response body to stderr
 
 send / stream flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
@@ -110,6 +111,19 @@ Address a tenant on multi-tenant agents:
 
 ```bash
 a2acli send -u https://agent.example.com --tenant acme "Hello"
+```
+
+Trace traffic with `-v` (verbose output goes to stderr, so JSON output on
+stdout stays pipeable):
+
+```bash
+a2acli -v send -u http://127.0.0.1:9001 "Hello"
+# → AgentCard http://127.0.0.1:9001/.well-known/agent-card.json
+# ← AgentCard http://127.0.0.1:9001
+# → SendMessage http://127.0.0.1:9001
+#   request:  {"message":{"role":"ROLE_USER","content":[{"type":"text","text":"Hello"}]}}
+# ← SendMessage http://127.0.0.1:9001
+#   response: {...}
 ```
 
 Pass authentication via `-H`:

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/a2aproject/a2a-go/v2/a2aclient/agentcard"
@@ -21,9 +22,15 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if opts.verbose {
+				fmt.Fprintf(cmd.ErrOrStderr(), "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
+			}
 			card, err := agentcard.NewResolver(httpClient).Resolve(cmd.Context(), opts.url, resolveOpts...)
 			if err != nil {
 				return err
+			}
+			if opts.verbose {
+				fmt.Fprintf(cmd.ErrOrStderr(), "← AgentCard %s\n", opts.url)
 			}
 			return printJSON(cmd.OutOrStdout(), card)
 		},

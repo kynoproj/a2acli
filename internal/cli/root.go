@@ -21,6 +21,7 @@ type globalOptions struct {
 	protocol string
 	insecure bool
 	tenant   string
+	verbose  bool
 }
 
 func NewRootCommand() *cobra.Command {
@@ -47,6 +48,7 @@ func NewRootCommand() *cobra.Command {
 	pf.StringVarP(&opts.protocol, "protocol", "p", "jsonrpc", "Transport protocol: jsonrpc, grpc, or rest")
 	pf.BoolVarP(&opts.insecure, "insecure", "k", false, "Use an insecure connection: skip TLS verification (jsonrpc/rest) or use plaintext credentials (grpc)")
 	pf.StringVar(&opts.tenant, "tenant", "", "Optional agent-owner tenant ID applied to every request")
+	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "Log request URL, request body, and response body to stderr")
 
 	root.AddCommand(
 		newCardCommand(opts),

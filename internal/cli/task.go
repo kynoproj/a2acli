@@ -27,7 +27,7 @@ func newTaskGetCommand(opts *globalOptions) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			client, _, err := dial(ctx, opts)
+			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}
@@ -62,7 +62,7 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 		Short: "List tasks on the agent",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
-			client, _, err := dial(ctx, opts)
+			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}
@@ -103,7 +103,7 @@ func newTaskCancelCommand(opts *globalOptions) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			client, _, err := dial(ctx, opts)
+			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}
@@ -125,7 +125,7 @@ func newTaskSubscribeCommand(opts *globalOptions) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			client, _, err := dial(ctx, opts)
+			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}

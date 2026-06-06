@@ -25,7 +25,7 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 			}
 
 			ctx := cmd.Context()
-			client, _, err := dial(ctx, opts)
+			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}
