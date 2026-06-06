@@ -2,10 +2,16 @@
 package cli
 
 import (
+	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 )
+
+// envServerURL is the environment variable consulted when --url is not
+// provided on the command line.
+const envServerURL = "A2A_SERVER"
 
 // globalOptions holds flags shared by all subcommands that talk to an A2A server.
 type globalOptions struct {
@@ -26,10 +32,16 @@ func NewRootCommand() *cobra.Command {
 		Long:          "a2acli is a command-line client for the A2A protocol built on the official a2a-go SDK.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		PersistentPreRunE: func(*cobra.Command, []string) error {
+			if strings.TrimSpace(opts.url) == "" {
+				opts.url = strings.TrimSpace(os.Getenv(envServerURL))
+			}
+			return nil
+		},
 	}
 
 	pf := root.PersistentFlags()
-	pf.StringVarP(&opts.url, "url", "u", "", "Base URL of the A2A agent server (e.g. http://127.0.0.1:9001)")
+	pf.StringVarP(&opts.url, "url", "u", "", "Base URL of the A2A agent server (e.g. http://127.0.0.1:9001); falls back to $A2A_SERVER")
 	pf.DurationVar(&opts.timeout, "timeout", 30*time.Second, "Request timeout for the underlying HTTP client")
 	pf.StringArrayVarP(&opts.header, "header", "H", nil, "Extra HTTP header to send with the agent-card request (repeatable, format: Key: Value)")
 	pf.StringVarP(&opts.protocol, "protocol", "p", "jsonrpc", "Transport protocol: jsonrpc, grpc, or rest")
