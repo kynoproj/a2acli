@@ -59,6 +59,10 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 	if opts.verbose {
 		fmt.Fprintf(verboseOut, "← AgentCard %s\n", opts.url)
 	}
+	card, err = applyHostOverride(card, opts.overrideHost)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	factoryOpts := []a2aclient.FactoryOption{
 		transport.option,

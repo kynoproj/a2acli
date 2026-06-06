@@ -15,13 +15,14 @@ const envServerURL = "A2A_SERVER"
 
 // globalOptions holds flags shared by all subcommands that talk to an A2A server.
 type globalOptions struct {
-	url      string
-	timeout  time.Duration
-	header   []string
-	protocol string
-	insecure bool
-	tenant   string
-	verbose  bool
+	url          string
+	timeout      time.Duration
+	header       []string
+	protocol     string
+	insecure     bool
+	tenant       string
+	verbose      bool
+	overrideHost string
 }
 
 func NewRootCommand() *cobra.Command {
@@ -49,6 +50,7 @@ func NewRootCommand() *cobra.Command {
 	pf.BoolVarP(&opts.insecure, "insecure", "k", false, "Use an insecure connection: skip TLS verification (jsonrpc/rest) or use plaintext credentials (grpc)")
 	pf.StringVar(&opts.tenant, "tenant", "", "Optional agent-owner tenant ID applied to every request")
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "Log request URL, request body, and response body to stderr")
+	pf.StringVar(&opts.overrideHost, "override-host", "", "Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)")
 
 	root.AddCommand(
 		newCardCommand(opts),

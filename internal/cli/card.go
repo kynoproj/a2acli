@@ -32,6 +32,10 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 			if opts.verbose {
 				fmt.Fprintf(cmd.ErrOrStderr(), "← AgentCard %s\n", opts.url)
 			}
+			card, err = applyHostOverride(card, opts.overrideHost)
+			if err != nil {
+				return err
+			}
 			return printJSON(cmd.OutOrStdout(), card)
 		},
 	}

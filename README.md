@@ -51,6 +51,7 @@ Global flags:
       --timeout duration       HTTP timeout (default 30s)
   -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
   -v, --verbose                Log request URL, request body, and response body to stderr
+      --override-host string   Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)
 
 send / stream flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
@@ -136,6 +137,13 @@ Talk to a gRPC server:
 
 ```bash
 a2acli send -u http://127.0.0.1:9001 -p grpc -k "Hello"
+```
+
+Override the host[:port] returned in the AgentCard (e.g. when the agent
+advertises an internal address but you've port-forwarded it locally):
+
+```bash
+a2acli send -u http://agent.internal -p grpc -k --override-host 127.0.0.1:9001 "Hello"
 ```
 
 Talk to a REST server:
