@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"github.com/a2aproject/a2a-go/v2/a2aclient"
 	a2agrpc "github.com/a2aproject/a2a-go/v2/a2agrpc/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 // transportSetup is the SDK wiring derived from a --protocol value.
@@ -36,9 +37,12 @@ func resolveTransport(protocol string, httpClient *http.Client, insecureConn boo
 			preferred: a2a.TransportProtocolHTTPJSON,
 		}, nil
 	case "grpc":
-		var dialOpts []grpc.DialOption
+		tlsCfg := &tls.Config{}
 		if insecureConn {
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			tlsCfg.InsecureSkipVerify = true //nolint:gosec
+		}
+		dialOpts := []grpc.DialOption{
+			grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)),
 		}
 		return transportSetup{
 			option:    a2agrpc.WithGRPCTransport(dialOpts...),
