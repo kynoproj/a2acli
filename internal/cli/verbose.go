@@ -21,7 +21,7 @@ func newVerboseInterceptor(w io.Writer) *verboseInterceptor {
 }
 
 func (v *verboseInterceptor) Before(ctx context.Context, req *a2aclient.Request) (context.Context, any, error) {
-	fmt.Fprintf(v.w, "→ %s %s\n", req.Method, req.BaseURL)
+	_, _ = fmt.Fprintf(v.w, "→ %s %s\n", req.Method, req.BaseURL)
 	if req.Payload != nil {
 		v.writeJSON("  request:  ", req.Payload)
 	}
@@ -30,10 +30,10 @@ func (v *verboseInterceptor) Before(ctx context.Context, req *a2aclient.Request)
 
 func (v *verboseInterceptor) After(ctx context.Context, resp *a2aclient.Response) error {
 	if resp.Err != nil {
-		fmt.Fprintf(v.w, "← %s ERROR %s\n", resp.Method, resp.Err)
+		_, _ = fmt.Fprintf(v.w, "← %s ERROR %s\n", resp.Method, resp.Err)
 		return nil
 	}
-	fmt.Fprintf(v.w, "← %s %s\n", resp.Method, resp.BaseURL)
+	_, _ = fmt.Fprintf(v.w, "← %s %s\n", resp.Method, resp.BaseURL)
 	if resp.Payload != nil {
 		v.writeJSON("  response: ", resp.Payload)
 	}
@@ -43,8 +43,8 @@ func (v *verboseInterceptor) After(ctx context.Context, resp *a2aclient.Response
 func (v *verboseInterceptor) writeJSON(prefix string, payload any) {
 	b, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Fprintf(v.w, "%s<unmarshalable %T: %v>\n", prefix, payload, err)
+		_, _ = fmt.Fprintf(v.w, "%s<unmarshalable %T: %v>\n", prefix, payload, err)
 		return
 	}
-	fmt.Fprintf(v.w, "%s%s\n", prefix, b)
+	_, _ = fmt.Fprintf(v.w, "%s%s\n", prefix, b)
 }
