@@ -46,6 +46,7 @@ Global flags:
   -u, --url string             Base URL of the A2A agent server (falls back to $A2A_SERVER)
   -p, --protocol string        Transport protocol: jsonrpc, rest, or grpc (default jsonrpc)
   -k, --insecure               Skip TLS certificate verification
+      --plaintext              Disable TLS entirely (gRPC only)
       --tenant string          Optional agent-owner tenant ID applied to every request
       --timeout duration       HTTP timeout (default 30s)
   -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
@@ -132,17 +133,24 @@ Pass authentication via `-H`:
 a2acli card -u https://agent.example.com -H "Authorization: Bearer $TOKEN"
 ```
 
-Talk to a gRPC server:
+Talk to a gRPC server (plaintext, e.g. local dev):
 
 ```bash
-a2acli send -u http://127.0.0.1:9001 -p grpc -k "Hello"
+a2acli send -u http://127.0.0.1:9001 -p grpc --plaintext "Hello"
+```
+
+Talk to a gRPC server over TLS, skipping certificate verification (e.g.
+self-signed cert):
+
+```bash
+a2acli send -u https://agent.example.com -p grpc -k "Hello"
 ```
 
 Override the host[:port] returned in the AgentCard (e.g. when the agent
 advertises an internal address but you've port-forwarded it locally):
 
 ```bash
-a2acli send -u http://agent.internal -p grpc -k --override-host 127.0.0.1:9001 "Hello"
+a2acli send -u http://agent.internal -p grpc --plaintext --override-host 127.0.0.1:9001 "Hello"
 ```
 
 Talk to a REST server:

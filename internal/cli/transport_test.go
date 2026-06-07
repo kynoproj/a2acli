@@ -27,7 +27,7 @@ func TestResolveTransport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resolveTransport(tt.protocol, &http.Client{}, false)
+			got, err := resolveTransport(tt.protocol, &http.Client{}, false, false)
 			if tt.wantErr != "" {
 				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 					t.Fatalf("err = %v, want substring %q", err, tt.wantErr)
@@ -39,6 +39,37 @@ func TestResolveTransport(t *testing.T) {
 			}
 			if got.preferred != tt.want {
 				t.Errorf("preferred = %q, want %q", got.preferred, tt.want)
+			}
+			if got.option == nil {
+				t.Errorf("expected non-nil FactoryOption")
+			}
+		})
+	}
+}
+
+func TestResolveTransportPlaintext(t *testing.T) {
+	tests := []struct {
+		name      string
+		protocol  string
+		plaintext bool
+		wantErr   string
+	}{
+		{"grpc-plaintext-ok", "grpc", true, ""},
+		{"grpc-tls-default", "grpc", false, ""},
+		{"jsonrpc-plaintext-rejected", "jsonrpc", true, "--plaintext is only supported with --protocol grpc"},
+		{"rest-plaintext-rejected", "rest", true, "--plaintext is only supported with --protocol grpc"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resolveTransport(tt.protocol, &http.Client{}, false, tt.plaintext)
+			if tt.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("err = %v, want substring %q", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 			if got.option == nil {
 				t.Errorf("expected non-nil FactoryOption")
