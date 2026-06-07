@@ -31,7 +31,7 @@ func newTaskGetCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer client.Destroy()
+			defer func() { _ = client.Destroy() }()
 
 			req := &a2a.GetTaskRequest{Tenant: opts.tenant, ID: a2a.TaskID(args[0])}
 			if cmd.Flags().Changed("history-length") {
@@ -66,7 +66,7 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer client.Destroy()
+			defer func() { _ = client.Destroy() }()
 
 			req := &a2a.ListTasksRequest{
 				Tenant:           opts.tenant,
@@ -107,7 +107,7 @@ func newTaskCancelCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer client.Destroy()
+			defer func() { _ = client.Destroy() }()
 
 			task, err := client.CancelTask(ctx, &a2a.CancelTaskRequest{Tenant: opts.tenant, ID: a2a.TaskID(args[0])})
 			if err != nil {
@@ -129,7 +129,7 @@ func newTaskSubscribeCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer client.Destroy()
+			defer func() { _ = client.Destroy() }()
 
 			req := &a2a.SubscribeToTaskRequest{Tenant: opts.tenant, ID: a2a.TaskID(args[0])}
 			out := cmd.OutOrStdout()

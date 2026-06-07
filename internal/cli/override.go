@@ -70,7 +70,7 @@ func hasScheme(raw string) bool {
 		return false
 	}
 	for _, r := range raw[:i] {
-		if !(r == '+' || r == '-' || r == '.' || (r >= '0' && r <= '9') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
+		if r != '+' && r != '-' && r != '.' && (r < '0' || r > '9') && (r < 'A' || r > 'Z') && (r < 'a' || r > 'z') {
 			return false
 		}
 	}

@@ -49,7 +49,7 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 	}
 
 	if opts.verbose {
-		fmt.Fprintf(verboseOut, "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
+		_, _ = fmt.Fprintf(verboseOut, "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
 	}
 	resolver := agentcard.NewResolver(httpClient)
 	card, err := resolver.Resolve(ctx, opts.url, resolveOpts...)
@@ -57,7 +57,7 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 		return nil, nil, fmt.Errorf("resolve agent card at %s: %w", opts.url, err)
 	}
 	if opts.verbose {
-		fmt.Fprintf(verboseOut, "← AgentCard %s\n", opts.url)
+		_, _ = fmt.Fprintf(verboseOut, "← AgentCard %s\n", opts.url)
 	}
 	card, err = applyHostOverride(card, opts.overrideHost)
 	if err != nil {

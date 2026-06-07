@@ -23,14 +23,14 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 				return err
 			}
 			if opts.verbose {
-				fmt.Fprintf(cmd.ErrOrStderr(), "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
 			}
 			card, err := agentcard.NewResolver(httpClient).Resolve(cmd.Context(), opts.url, resolveOpts...)
 			if err != nil {
 				return err
 			}
 			if opts.verbose {
-				fmt.Fprintf(cmd.ErrOrStderr(), "← AgentCard %s\n", opts.url)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "← AgentCard %s\n", opts.url)
 			}
 			card, err = applyHostOverride(card, opts.overrideHost)
 			if err != nil {

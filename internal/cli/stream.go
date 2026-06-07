@@ -27,7 +27,7 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer client.Destroy()
+			defer func() { _ = client.Destroy() }()
 
 			msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart(text))
 			req := &a2a.SendMessageRequest{Tenant: opts.tenant, Message: msg}
