@@ -38,7 +38,7 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 
 	httpClient := newHTTPClient(opts)
 
-	transport, err := resolveTransport(opts.protocol, httpClient, opts.insecure)
+	transport, err := resolveTransport(opts.protocol, httpClient, opts.insecure, opts.plaintext)
 	if err != nil {
 		return nil, nil, err
 	}

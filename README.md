@@ -1,8 +1,8 @@
 # A2A CLI
 
 A command-line client for the [A2A](https://a2a-protocol.org/) (Agent-to-Agent)
-Protocol, built on the official
-[`a2a-go`](https://github.com/a2aproject/a2a-go) SDK.
+Protocol, built on the official [`a2a-go`](https://github.com/a2aproject/a2a-go)
+SDK.
 
 ## Install
 
@@ -18,18 +18,17 @@ go build -o a2acli .
 
 ## Usage
 
-All commands take `--url` (`-u`) pointing at the A2A server's base URL.
-When `--url` is omitted, `a2acli` falls back to the `A2A_SERVER` environment
-variable.
-The AgentCard is fetched from `<url>/.well-known/agent-card.json` and the
-client connects using the transport selected by `--protocol`
-(default `jsonrpc`).
+All commands take `--url` (`-u`) pointing at the A2A server's base URL. When
+`--url` is omitted, `a2acli` falls back to the `A2A_SERVER` environment
+variable. The AgentCard is fetched from `<url>/.well-known/agent-card.json` and
+the client connects using the transport selected by `--protocol` (default
+`jsonrpc`).
 
 Supported `--protocol` values:
 
 - `jsonrpc` — JSON-RPC over HTTP (default).
 - `rest` — REST / HTTP+JSON.
-- `grpc` — gRPC. Use `--insecure` for plaintext connections.
+- `grpc` — gRPC.
 
 ```text
 a2acli [command]
@@ -46,7 +45,8 @@ Commands:
 Global flags:
   -u, --url string             Base URL of the A2A agent server (falls back to $A2A_SERVER)
   -p, --protocol string        Transport protocol: jsonrpc, rest, or grpc (default jsonrpc)
-  -k, --insecure               Skip TLS verification (jsonrpc/rest) or use plaintext credentials (grpc)
+  -k, --insecure               Skip TLS certificate verification
+      --plaintext              Disable TLS entirely (gRPC only)
       --tenant string          Optional agent-owner tenant ID applied to every request
       --timeout duration       HTTP timeout (default 30s)
   -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
@@ -61,8 +61,8 @@ send / stream flags:
 
 ### Environment
 
-| Variable     | Effect                                                       |
-|--------------|--------------------------------------------------------------|
+| Variable     | Effect                                                                              |
+| ------------ | ----------------------------------------------------------------------------------- |
 | `A2A_SERVER` | Default for `--url` when the flag is not provided. The flag, when set, always wins. |
 
 ```bash
@@ -114,8 +114,8 @@ Address a tenant on multi-tenant agents:
 a2acli send -u https://agent.example.com --tenant acme "Hello"
 ```
 
-Trace traffic with `-v` (verbose output goes to stderr, so JSON output on
-stdout stays pipeable):
+Trace traffic with `-v` (verbose output goes to stderr, so JSON output on stdout
+stays pipeable):
 
 ```bash
 a2acli -v send -u http://127.0.0.1:9001 "Hello"
@@ -133,17 +133,24 @@ Pass authentication via `-H`:
 a2acli card -u https://agent.example.com -H "Authorization: Bearer $TOKEN"
 ```
 
-Talk to a gRPC server:
+Talk to a gRPC server (plaintext, e.g. local dev):
 
 ```bash
-a2acli send -u http://127.0.0.1:9001 -p grpc -k "Hello"
+a2acli send -u http://127.0.0.1:9001 -p grpc --plaintext "Hello"
+```
+
+Talk to a gRPC server over TLS, skipping certificate verification (e.g.
+self-signed cert):
+
+```bash
+a2acli send -u https://agent.example.com -p grpc -k "Hello"
 ```
 
 Override the host[:port] returned in the AgentCard (e.g. when the agent
 advertises an internal address but you've port-forwarded it locally):
 
 ```bash
-a2acli send -u http://agent.internal -p grpc -k --override-host 127.0.0.1:9001 "Hello"
+a2acli send -u http://agent.internal -p grpc --plaintext --override-host 127.0.0.1:9001 "Hello"
 ```
 
 Talk to a REST server:

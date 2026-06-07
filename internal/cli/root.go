@@ -20,6 +20,7 @@ type globalOptions struct {
 	header       []string
 	protocol     string
 	insecure     bool
+	plaintext    bool
 	tenant       string
 	verbose      bool
 	overrideHost string
@@ -47,7 +48,8 @@ func NewRootCommand() *cobra.Command {
 	pf.DurationVar(&opts.timeout, "timeout", 30*time.Second, "Request timeout for the underlying HTTP client")
 	pf.StringArrayVarP(&opts.header, "header", "H", nil, "Extra HTTP header to send with the agent-card request (repeatable, format: Key: Value)")
 	pf.StringVarP(&opts.protocol, "protocol", "p", "jsonrpc", "Transport protocol: jsonrpc, grpc, or rest")
-	pf.BoolVarP(&opts.insecure, "insecure", "k", false, "Use an insecure connection: skip TLS verification (jsonrpc/rest) or use plaintext credentials (grpc)")
+	pf.BoolVarP(&opts.insecure, "insecure", "k", false, "Skip TLS certificate verification (TLS is still used for encryption)")
+	pf.BoolVar(&opts.plaintext, "plaintext", false, "Disable TLS entirely (gRPC only); incompatible with other protocols")
 	pf.StringVar(&opts.tenant, "tenant", "", "Optional agent-owner tenant ID applied to every request")
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "Log request URL, request body, and response body to stderr")
 	pf.StringVar(&opts.overrideHost, "override-host", "", "Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)")

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/a2aproject/a2a-go/v2/a2aclient"
 	a2agrpc "github.com/a2aproject/a2a-go/v2/a2agrpc/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -23,8 +25,15 @@ type transportSetup struct {
 // resolveTransport maps the --protocol flag to an SDK FactoryOption + a
 // preferred TransportProtocol value used to pick the matching AgentInterface
 // from the resolved AgentCard.
-func resolveTransport(protocol string, httpClient *http.Client, insecureConn bool) (transportSetup, error) {
-	switch strings.ToLower(strings.TrimSpace(protocol)) {
+//
+// plaintext applies only to gRPC: when true, the connection runs without TLS.
+// It is rejected for non-gRPC protocols.
+func resolveTransport(protocol string, httpClient *http.Client, insecureConn, plaintext bool) (transportSetup, error) {
+	normalized := strings.ToLower(strings.TrimSpace(protocol))
+	if plaintext && normalized != "grpc" {
+		return transportSetup{}, fmt.Errorf("--plaintext is only supported with --protocol grpc")
+	}
+	switch normalized {
 	case "", "jsonrpc", "json-rpc", "json_rpc":
 		return transportSetup{
 			option:    a2aclient.WithJSONRPCTransport(httpClient),
@@ -36,9 +45,18 @@ func resolveTransport(protocol string, httpClient *http.Client, insecureConn boo
 			preferred: a2a.TransportProtocolHTTPJSON,
 		}, nil
 	case "grpc":
-		var dialOpts []grpc.DialOption
-		if insecureConn {
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		var creds credentials.TransportCredentials
+		if plaintext {
+			creds = insecure.NewCredentials()
+		} else {
+			tlsCfg := &tls.Config{}
+			if insecureConn {
+				tlsCfg.InsecureSkipVerify = true //nolint:gosec
+			}
+			creds = credentials.NewTLS(tlsCfg)
+		}
+		dialOpts := []grpc.DialOption{
+			grpc.WithTransportCredentials(creds),
 		}
 		return transportSetup{
 			option:    a2agrpc.WithGRPCTransport(dialOpts...),
