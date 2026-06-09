@@ -12,7 +12,7 @@ import (
 func runRootForURL(t *testing.T, args []string) string {
 	t.Helper()
 
-	root := NewRootCommand()
+	root := NewRootCommand(VersionInfo{Version: "test"})
 	root.SetOut(io.Discard)
 	root.SetErr(io.Discard)
 
