@@ -26,13 +26,14 @@ type globalOptions struct {
 	overrideHost string
 }
 
-func NewRootCommand() *cobra.Command {
+func NewRootCommand(info VersionInfo) *cobra.Command {
 	opts := &globalOptions{}
 
 	root := &cobra.Command{
 		Use:           "a2acli",
 		Short:         "Command-line client for the A2A (Agent-to-Agent) protocol",
 		Long:          "a2acli is a command-line client for the A2A protocol built on the official a2a-go SDK.",
+		Version:       info.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(*cobra.Command, []string) error {
@@ -59,6 +60,7 @@ func NewRootCommand() *cobra.Command {
 		newSendCommand(opts),
 		newStreamCommand(opts),
 		newTaskCommand(opts),
+		newVersionCommand(info),
 	)
 	return root
 }

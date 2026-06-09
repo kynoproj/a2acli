@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+.vscode
+test
+*.md
+Dockerfile
+.dockerignore
+a2acli
