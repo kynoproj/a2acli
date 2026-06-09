@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         go build -trimpath -ldflags="${LDFLAGS}" -o /out/a2acli .
 
 # ---------- Runtime stage (debug-friendly) ----------
-FROM alpine:3.20
+FROM alpine:3.23
 
 RUN apk add --no-cache \
         bash \
@@ -51,18 +51,6 @@ RUN apk add --no-cache \
         jq \
         openssl \
         tzdata
-
-# grpcurl is not in the alpine repos; pull a prebuilt release binary.
-ARG GRPCURL_VERSION=1.9.1
-ARG TARGETARCH
-RUN set -eux; \
-    case "${TARGETARCH:-amd64}" in \
-        amd64) GRPCURL_ARCH=x86_64 ;; \
-        arm64) GRPCURL_ARCH=arm64 ;; \
-        *) echo "unsupported arch: ${TARGETARCH}"; exit 1 ;; \
-    esac; \
-    curl -fsSL "https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_linux_${GRPCURL_ARCH}.tar.gz" \
-        | tar -xz -C /usr/local/bin grpcurl
 
 COPY --from=builder /out/a2acli /usr/local/bin/a2acli
 
