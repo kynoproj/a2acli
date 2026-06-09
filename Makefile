@@ -4,7 +4,7 @@ COVERAGE_DIR := test
 COVERAGE_OUT := $(COVERAGE_DIR)/profile.cov
 GOLANGCI_LINT_VERSION := v1.62.2
 IMAGE       ?= quay.io/kynoproj/a2acli
-VERSION     ?= dev
+VERSION     ?= latest
 
 ifndef GOPATH
 GOPATH=$(shell go env GOPATH)

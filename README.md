@@ -13,7 +13,7 @@ go install github.com/kynoproj/a2acli@latest
 Or build from source:
 
 ```bash
-go build -o a2acli .
+make build
 ```
 
 ## Usage
@@ -41,6 +41,7 @@ Commands:
   task list        List tasks
   task cancel      Cancel a task by ID
   task subscribe   Re-subscribe to an existing task and stream events
+  version          Print binary version and build metadata
 
 Global flags:
   -u, --url string             Base URL of the A2A agent server (falls back to $A2A_SERVER)
@@ -157,6 +158,24 @@ Talk to a REST server:
 
 ```bash
 a2acli send -u http://127.0.0.1:9001 -p rest "Hello"
+```
+
+## Docker (in-cluster debugging)
+
+Run interactively inside a cluster:
+
+```bash
+kubectl run a2acli-debug --rm -it --restart=Never \
+  --image=quay.io/kynoproj/a2acli:v0.1.0 \
+  --command -- bash
+# then, inside the pod:
+a2acli card -u http://my-agent.default.svc:9001
+```
+
+Or as an ephemeral debug container against an existing pod:
+
+```bash
+kubectl debug -it some-pod --image=quay.io/kynoproj/a2acli:v0.1.0 -- bash
 ```
 
 ## License
