@@ -31,8 +31,6 @@ jobs:
         run: |
           make build-binaries
           chmod -R +x dist
-      - name: Make checksums
-        run: make checksums
       - name: Store artifacts
         uses: actions/upload-artifact@v7
         with:
