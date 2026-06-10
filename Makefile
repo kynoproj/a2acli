@@ -1,3 +1,5 @@
+SHELL:=/bin/bash
+
 BINARY      := a2acli
 REPO_ROOT   := $(shell pwd)
 DOCKERFILE  := Dockerfile
