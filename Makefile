@@ -1,13 +1,25 @@
 BINARY      := a2acli
+REPO_ROOT   := $(shell pwd)
+DOCKERFILE  := Dockerfile
 PKG         := ./...
 COVERAGE_DIR := test
 COVERAGE_OUT := $(COVERAGE_DIR)/profile.cov
+DIST_DIR     := dist
 GOLANGCI_LINT_VERSION := v1.62.2
 IMAGE       ?= quay.io/kynoproj/a2acli
 VERSION     ?= latest
 
 ifndef GOPATH
 GOPATH=$(shell go env GOPATH)
+endif
+
+HOST_ARCH=$(shell uname -m)
+# Github actions instances are x86_64
+ifeq ($(HOST_ARCH),x86_64)
+	HOST_ARCH=amd64
+endif
+ifeq ($(HOST_ARCH),aarch64)
+	HOST_ARCH=arm64
 endif
 
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -33,6 +45,23 @@ all: lint test
 
 build:
 	go build -v -ldflags '${LDFLAGS}' -o $(BINARY) .
+
+build-binaries: clean $(DIST_DIR)/$(BINARY)-darwin-amd64.gz $(DIST_DIR)/$(BINARY)-darwin-arm64.gz $(DIST_DIR)/$(BINARY)-linux-amd64.gz $(DIST_DIR)/$(BINARY)-linux-arm64.gz $(DIST_DIR)/$(BINARY)-linux-arm.gz $(DIST_DIR)/$(BINARY)-linux-ppc64le.gz $(DIST_DIR)/$(BINARY)-linux-s390x.gz
+
+$(DIST_DIR)/$(BINARY)-%.gz: $(DIST_DIR)/$(BINARY)-%
+	@[[ -e $(DIST_DIR)/$(BINARY)-$*.gz ]] || gzip -k $(DIST_DIR)/$(BINARY)-$*
+
+$(DIST_DIR)/$(BINARY): GOARGS = GOOS= GOARCH=
+$(DIST_DIR)/$(BINARY)-darwin-amd64: GOARGS = GOOS=darwin GOARCH=amd64
+$(DIST_DIR)/$(BINARY)-darwin-arm64: GOARGS = GOOS=darwin GOARCH=arm64
+$(DIST_DIR)/$(BINARY)-linux-amd64: GOARGS = GOOS=linux GOARCH=amd64
+$(DIST_DIR)/$(BINARY)-linux-arm64: GOARGS = GOOS=linux GOARCH=arm64
+$(DIST_DIR)/$(BINARY)-linux-arm: GOARGS = GOOS=linux GOARCH=arm
+$(DIST_DIR)/$(BINARY)-linux-ppc64le: GOARGS = GOOS=linux GOARCH=ppc64le
+$(DIST_DIR)/$(BINARY)-linux-s390x: GOARGS = GOOS=linux GOARCH=s390x
+
+$(DIST_DIR)/$(BINARY)-%:
+	CGO_ENABLED=0 $(GOARGS) go build -v -ldflags '${LDFLAGS}' -o $(DIST_DIR)/$(BINARY)-$* .
 
 test:
 	go test -race -v $(PKG)
@@ -63,18 +92,23 @@ tidy:
 clean:
 	rm -f $(BINARY)
 	rm -rf $(COVERAGE_DIR)
+	rm -rf $(DIST_DIR)
 
-docker-build:
+docker-build: clean dist/$(BINARY)-linux-$(HOST_ARCH)
 	docker build \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
-		--build-arg GIT_TAG=$(GIT_TAG) \
-		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
 		-t $(IMAGE):$(VERSION) .
 
 docker-push:
 	docker push $(IMAGE):$(VERSION)
+
+buildx-push: clean dist/$(BINARY)-linux-amd64 dist/$(BINARY)-linux-arm64
+	docker buildx build \
+		--platform linux/amd64,linux/arm64 \
+		-f $(DOCKERFILE) \
+		-t $(IMAGE):$(VERSION) \
+		--push \
+		$(REPO_ROOT)
+
 
 help:
 	@echo "Targets:"
