@@ -12,13 +12,6 @@ Install the latest released binary:
 curl -fsSL https://raw.githubusercontent.com/kynoproj/a2acli/main/install.sh | bash
 ```
 
-Pin a specific version or install location:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/kynoproj/a2acli/main/install.sh \
-  | A2ACLI_VERSION=v0.1.0 INSTALL_DIR=$HOME/.local/bin bash
-```
-
 Or install via Go:
 
 ```bash
