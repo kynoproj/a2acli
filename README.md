@@ -1,10 +1,25 @@
-# A2A CLI
+# A2A (Agent-to-Agent) Protocol CLI
 
 A command-line client for the [A2A](https://a2a-protocol.org/) (Agent-to-Agent)
 Protocol, built on the official [`a2a-go`](https://github.com/a2aproject/a2a-go)
 SDK.
 
 ## Install
+
+Install the latest released binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kynoproj/a2acli/main/install.sh | bash
+```
+
+Pin a specific version or install location:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kynoproj/a2acli/main/install.sh \
+  | A2ACLI_VERSION=v0.1.0 INSTALL_DIR=$HOME/.local/bin bash
+```
+
+Or install via Go:
 
 ```bash
 go install github.com/kynoproj/a2acli@latest
