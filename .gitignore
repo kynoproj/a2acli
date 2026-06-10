@@ -34,3 +34,4 @@ go.work.sum
 
 a2acli
 main
+dist/
