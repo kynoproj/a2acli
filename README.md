@@ -61,6 +61,7 @@ Global flags:
   -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
   -v, --verbose                Log request URL, request body, and response body to stderr
       --override-host string   Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)
+      --endpoint string        Direct endpoint URL for the chosen --protocol; bypasses the AgentCard fetch
 
 send / stream flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
@@ -155,6 +156,12 @@ self-signed cert):
 a2acli send -u https://agent.example.com -p grpc -k "Hello"
 ```
 
+Talk to a REST server:
+
+```bash
+a2acli send -u http://127.0.0.1:9001 -p rest "Hello"
+```
+
 Override the host[:port] returned in the AgentCard (e.g. when the agent
 advertises an internal address but you've port-forwarded it locally):
 
@@ -162,11 +169,24 @@ advertises an internal address but you've port-forwarded it locally):
 a2acli send -u http://agent.internal -p grpc --plaintext --override-host 127.0.0.1:9001 "Hello"
 ```
 
-Talk to a REST server:
+Bypass the AgentCard entirely with `--endpoint`. Use this when the server
+either does not expose `/.well-known/agent-card.json`, or its AgentCard is
+missing or misreports `supportedInterfaces` — `a2acli` will skip resolution
+and connect straight to the endpoint you supply with the chosen `--protocol`:
 
 ```bash
-a2acli send -u http://127.0.0.1:9001 -p rest "Hello"
+# JSON-RPC over HTTP
+a2acli send -p jsonrpc --endpoint http://127.0.0.1:9001 "Hello"
+
+# REST / HTTP+JSON
+a2acli send -p rest --endpoint http://127.0.0.1:9001 "Hello"
+
+# gRPC (plaintext)
+a2acli send -p grpc --plaintext --endpoint 127.0.0.1:9001 "Hello"
 ```
+
+`--endpoint` is incompatible with `--override-host` (set the endpoint URL
+directly) and with `a2acli card` (which has nothing to fetch).
 
 ## Docker (in-cluster debugging)
 

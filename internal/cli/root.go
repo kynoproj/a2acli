@@ -16,6 +16,7 @@ const envServerURL = "A2A_SERVER"
 // globalOptions holds flags shared by all subcommands that talk to an A2A server.
 type globalOptions struct {
 	url          string
+	endpoint     string
 	timeout      time.Duration
 	header       []string
 	protocol     string
@@ -54,6 +55,7 @@ func NewRootCommand(info VersionInfo) *cobra.Command {
 	pf.StringVar(&opts.tenant, "tenant", "", "Optional agent-owner tenant ID applied to every request")
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "Log request URL, request body, and response body to stderr")
 	pf.StringVar(&opts.overrideHost, "override-host", "", "Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)")
+	pf.StringVar(&opts.endpoint, "endpoint", "", "Direct endpoint URL for the chosen --protocol; when set, the AgentCard is not fetched (useful for servers with missing/incorrect SupportedInterfaces)")
 
 	root.AddCommand(
 		newCardCommand(opts),

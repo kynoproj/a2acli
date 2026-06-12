@@ -27,20 +27,36 @@ func newHTTPClient(opts *globalOptions) *http.Client {
 	return c
 }
 
-// dial resolves the AgentCard at opts.url and constructs a client using the
-// transport selected by --protocol. The returned card is shared so callers can
-// inspect it without an extra round trip. When opts.verbose is true, every
-// protocol call is logged to verboseOut.
+// dial constructs a client using the transport selected by --protocol. When
+// --endpoint is set, the AgentCard fetch is bypassed and the client is built
+// directly from the supplied endpoint (useful for servers whose AgentCard is
+// missing or has incorrect SupportedInterfaces); in that case the returned
+// card is nil. Otherwise dial resolves the AgentCard at opts.url first. When
+// opts.verbose is true, every protocol call is logged to verboseOut.
 func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2aclient.Client, *a2a.AgentCard, error) {
-	if strings.TrimSpace(opts.url) == "" {
-		return nil, nil, errors.New("--url is required")
-	}
-
 	httpClient := newHTTPClient(opts)
 
 	transport, err := resolveTransport(opts.protocol, httpClient, opts.insecure, opts.plaintext)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	factoryOpts := []a2aclient.FactoryOption{
+		transport.option,
+		a2aclient.WithConfig(a2aclient.Config{
+			PreferredTransports: []a2a.TransportProtocol{transport.preferred},
+		}),
+	}
+	if opts.verbose {
+		factoryOpts = append(factoryOpts, a2aclient.WithCallInterceptors(newVerboseInterceptor(verboseOut)))
+	}
+
+	if strings.TrimSpace(opts.endpoint) != "" {
+		return dialDirect(ctx, opts, transport.preferred, factoryOpts, verboseOut)
+	}
+
+	if strings.TrimSpace(opts.url) == "" {
+		return nil, nil, errors.New("--url is required (or use --endpoint to bypass the AgentCard)")
 	}
 
 	resolveOpts, err := buildResolveOptions(opts.header)
@@ -64,20 +80,30 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 		return nil, nil, err
 	}
 
-	factoryOpts := []a2aclient.FactoryOption{
-		transport.option,
-		a2aclient.WithConfig(a2aclient.Config{
-			PreferredTransports: []a2a.TransportProtocol{transport.preferred},
-		}),
-	}
-	if opts.verbose {
-		factoryOpts = append(factoryOpts, a2aclient.WithCallInterceptors(newVerboseInterceptor(verboseOut)))
-	}
 	client, err := a2aclient.NewFromCard(ctx, card, factoryOpts...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create a2a client: %w", err)
 	}
 	return client, card, nil
+}
+
+// dialDirect builds a client straight from --endpoint + --protocol, skipping
+// the AgentCard resolver. It synthesizes a single AgentInterface and hands it
+// to a2aclient.NewFromEndpoints. The returned card is nil because no real card
+// was fetched.
+func dialDirect(ctx context.Context, opts *globalOptions, protocol a2a.TransportProtocol, factoryOpts []a2aclient.FactoryOption, verboseOut io.Writer) (*a2aclient.Client, *a2a.AgentCard, error) {
+	if strings.TrimSpace(opts.overrideHost) != "" {
+		return nil, nil, errors.New("--override-host is not supported with --endpoint; set the endpoint URL directly")
+	}
+	iface := a2a.NewAgentInterface(strings.TrimSpace(opts.endpoint), protocol)
+	if opts.verbose {
+		_, _ = fmt.Fprintf(verboseOut, "→ DirectEndpoint %s (%s)\n", iface.URL, protocol)
+	}
+	client, err := a2aclient.NewFromEndpoints(ctx, []*a2a.AgentInterface{iface}, factoryOpts...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create a2a client for endpoint %s: %w", iface.URL, err)
+	}
+	return client, nil, nil
 }
 
 func buildResolveOptions(headers []string) ([]agentcard.ResolveOption, error) {

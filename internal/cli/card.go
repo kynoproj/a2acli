@@ -14,6 +14,9 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 		Use:   "card",
 		Short: "Fetch and print the AgentCard of an A2A server",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if strings.TrimSpace(opts.endpoint) != "" {
+				return errors.New("a2acli card requires fetching the AgentCard; --endpoint bypasses it")
+			}
 			if strings.TrimSpace(opts.url) == "" {
 				return errors.New("--url is required")
 			}
