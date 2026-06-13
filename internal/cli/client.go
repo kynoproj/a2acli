@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2aclient"
@@ -47,8 +48,10 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 			PreferredTransports: []a2a.TransportProtocol{transport.preferred},
 		}),
 	}
+	cmode := opts.colorMode()
+	cEnabled := colorEnabled(verboseOut, cmode)
 	if opts.verbose {
-		factoryOpts = append(factoryOpts, a2aclient.WithCallInterceptors(newVerboseInterceptor(verboseOut)))
+		factoryOpts = append(factoryOpts, a2aclient.WithCallInterceptors(newVerboseInterceptorWithMode(verboseOut, cmode)))
 	}
 
 	if strings.TrimSpace(opts.endpoint) != "" {
@@ -65,7 +68,9 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 	}
 
 	if opts.verbose {
-		_, _ = fmt.Fprintf(verboseOut, "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
+		_, _ = fmt.Fprintf(verboseOut, "%s %s AgentCard %s/.well-known/agent-card.json\n",
+			time.Now().Format(timestampLayout),
+			colorize(cEnabled, ansiCyan, "→"), strings.TrimRight(opts.url, "/"))
 	}
 	resolver := agentcard.NewResolver(httpClient)
 	card, err := resolver.Resolve(ctx, opts.url, resolveOpts...)
@@ -73,7 +78,9 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 		return nil, nil, fmt.Errorf("resolve agent card at %s: %w", opts.url, err)
 	}
 	if opts.verbose {
-		_, _ = fmt.Fprintf(verboseOut, "← AgentCard %s\n", opts.url)
+		_, _ = fmt.Fprintf(verboseOut, "%s %s AgentCard %s\n",
+			time.Now().Format(timestampLayout),
+			colorize(cEnabled, ansiGreen, "←"), opts.url)
 	}
 	card, err = applyHostOverride(card, opts.overrideHost)
 	if err != nil {
@@ -97,7 +104,10 @@ func dialDirect(ctx context.Context, opts *globalOptions, protocol a2a.Transport
 	}
 	iface := a2a.NewAgentInterface(strings.TrimSpace(opts.endpoint), protocol)
 	if opts.verbose {
-		_, _ = fmt.Fprintf(verboseOut, "→ DirectEndpoint %s (%s)\n", iface.URL, protocol)
+		cEnabled := colorEnabled(verboseOut, opts.colorMode())
+		_, _ = fmt.Fprintf(verboseOut, "%s %s DirectEndpoint %s (%s)\n",
+			time.Now().Format(timestampLayout),
+			colorize(cEnabled, ansiCyan, "→"), iface.URL, protocol)
 	}
 	client, err := a2aclient.NewFromEndpoints(ctx, []*a2a.AgentInterface{iface}, factoryOpts...)
 	if err != nil {

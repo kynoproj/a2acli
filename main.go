@@ -25,7 +25,7 @@ func main() {
 		GitTreeState: gitTreeState,
 	}
 	if err := cli.NewRootCommand(info).Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		fmt.Fprintln(os.Stderr, cli.ErrorLabel(os.Stderr), err)
 		os.Exit(1)
 	}
 }

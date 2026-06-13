@@ -25,6 +25,15 @@ type globalOptions struct {
 	tenant       string
 	verbose      bool
 	overrideHost string
+	noColor      bool
+}
+
+// colorMode resolves the user's color preference into a colorMode.
+func (o *globalOptions) colorMode() colorMode {
+	if o.noColor {
+		return colorOff
+	}
+	return colorAuto
 }
 
 func NewRootCommand(info VersionInfo) *cobra.Command {
@@ -56,6 +65,7 @@ func NewRootCommand(info VersionInfo) *cobra.Command {
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "Log request URL, request body, and response body to stderr")
 	pf.StringVar(&opts.overrideHost, "override-host", "", "Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)")
 	pf.StringVar(&opts.endpoint, "endpoint", "", "Direct endpoint URL for the chosen --protocol; when set, the AgentCard is not fetched (useful for servers with missing/incorrect SupportedInterfaces)")
+	pf.BoolVar(&opts.noColor, "no-color", false, "Disable ANSI colors in terminal output (also honors the NO_COLOR env var)")
 
 	root.AddCommand(
 		newCardCommand(opts),

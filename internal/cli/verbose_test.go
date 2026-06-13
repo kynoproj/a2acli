@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2aclient"
 )
@@ -54,5 +55,39 @@ func TestVerboseInterceptorAfterError(t *testing.T) {
 	}
 	if got := buf.String(); !strings.Contains(got, "ERROR not found") {
 		t.Errorf("missing ERROR line in: %q", got)
+	}
+}
+
+func TestVerboseInterceptorTimestamp(t *testing.T) {
+	var buf bytes.Buffer
+	v := newVerboseInterceptor(&buf)
+	v.now = func() time.Time {
+		return time.Date(2026, 6, 12, 14, 30, 45, 123_000_000, time.UTC)
+	}
+
+	if _, _, err := v.Before(context.Background(), &a2aclient.Request{
+		Method:  "SendMessage",
+		BaseURL: "http://agent.example",
+	}); err != nil {
+		t.Fatalf("Before: %v", err)
+	}
+	if err := v.After(context.Background(), &a2aclient.Response{
+		Method:  "SendMessage",
+		BaseURL: "http://agent.example",
+	}); err != nil {
+		t.Fatalf("After: %v", err)
+	}
+	if err := v.After(context.Background(), &a2aclient.Response{
+		Method: "SendMessage",
+		Err:    errors.New("boom"),
+	}); err != nil {
+		t.Fatalf("After (error): %v", err)
+	}
+
+	out := buf.String()
+	for line := range strings.SplitSeq(strings.TrimRight(out, "\n"), "\n") {
+		if !strings.HasPrefix(line, "[06/12/2026 14:30:45.123] ") {
+			t.Errorf("line missing expected timestamp prefix: %q", line)
+		}
 	}
 }
