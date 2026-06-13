@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2aclient/agentcard"
 	"github.com/spf13/cobra"
@@ -25,15 +26,20 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			cEnabled := colorEnabled(cmd.ErrOrStderr(), opts.colorMode())
 			if opts.verbose {
-				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "→ AgentCard %s/.well-known/agent-card.json\n", strings.TrimRight(opts.url, "/"))
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "%s %s AgentCard %s/.well-known/agent-card.json\n",
+					time.Now().Format(timestampLayout),
+					colorize(cEnabled, ansiCyan, "→"), strings.TrimRight(opts.url, "/"))
 			}
 			card, err := agentcard.NewResolver(httpClient).Resolve(cmd.Context(), opts.url, resolveOpts...)
 			if err != nil {
 				return err
 			}
 			if opts.verbose {
-				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "← AgentCard %s\n", opts.url)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "%s %s AgentCard %s\n",
+					time.Now().Format(timestampLayout),
+					colorize(cEnabled, ansiGreen, "←"), opts.url)
 			}
 			card, err = applyHostOverride(card, opts.overrideHost)
 			if err != nil {
