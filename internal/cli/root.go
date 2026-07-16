@@ -57,7 +57,7 @@ func NewRootCommand(info VersionInfo) *cobra.Command {
 	pf := root.PersistentFlags()
 	pf.StringVarP(&opts.url, "url", "u", "", "Base URL of the A2A agent server (e.g. http://127.0.0.1:9001); falls back to $A2A_SERVER")
 	pf.DurationVar(&opts.timeout, "timeout", 30*time.Second, "Request timeout for the underlying HTTP client")
-	pf.StringArrayVarP(&opts.header, "header", "H", nil, "Extra HTTP header to send with the agent-card request (repeatable, format: Key: Value)")
+	pf.StringArrayVarP(&opts.header, "header", "H", nil, "Extra header to send with every request, including the agent-card fetch and protocol calls (repeatable, format: Key: Value)")
 	pf.StringVarP(&opts.protocol, "protocol", "p", "jsonrpc", "Transport protocol: jsonrpc, grpc, or rest")
 	pf.BoolVarP(&opts.insecure, "insecure", "k", false, "Skip TLS certificate verification (TLS is still used for encryption)")
 	pf.BoolVar(&opts.plaintext, "plaintext", false, "Disable TLS entirely (gRPC only); incompatible with other protocols")
