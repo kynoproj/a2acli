@@ -48,6 +48,19 @@ func dial(ctx context.Context, opts *globalOptions, verboseOut io.Writer) (*a2ac
 			PreferredTransports: []a2a.TransportProtocol{transport.preferred},
 		}),
 	}
+
+	// Inject --header values into every protocol call (send/task/stream) via a
+	// CallInterceptor. Without this, headers would only reach the AgentCard
+	// fetch below, not the actual RPCs, and would be dropped entirely on the
+	// --endpoint path.
+	headerInt, err := newHeaderInterceptor(opts.header)
+	if err != nil {
+		return nil, nil, err
+	}
+	if headerInt != nil {
+		factoryOpts = append(factoryOpts, a2aclient.WithCallInterceptors(headerInt))
+	}
+
 	cmode := opts.colorMode()
 	cEnabled := colorEnabled(verboseOut, cmode)
 	if opts.verbose {
@@ -117,16 +130,16 @@ func dialDirect(ctx context.Context, opts *globalOptions, protocol a2a.Transport
 }
 
 func buildResolveOptions(headers []string) ([]agentcard.ResolveOption, error) {
-	if len(headers) == 0 {
+	parsed, err := parseHeaders(headers)
+	if err != nil {
+		return nil, err
+	}
+	if len(parsed) == 0 {
 		return nil, nil
 	}
-	out := make([]agentcard.ResolveOption, 0, len(headers))
-	for _, h := range headers {
-		name, val, ok := strings.Cut(h, ":")
-		if !ok {
-			return nil, fmt.Errorf("invalid header %q: expected 'Key: Value'", h)
-		}
-		out = append(out, agentcard.WithRequestHeader(strings.TrimSpace(name), strings.TrimSpace(val)))
+	out := make([]agentcard.ResolveOption, 0, len(parsed))
+	for _, h := range parsed {
+		out = append(out, agentcard.WithRequestHeader(h.name, h.value))
 	}
 	return out, nil
 }
