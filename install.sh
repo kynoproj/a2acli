@@ -19,6 +19,14 @@ REPO="kynoproj/a2acli"
 BINARY_NAME="${BINARY_NAME:-a2acli}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
+# tmpdir and its EXIT trap live at script scope, not local to main(). As a
+# main()-local, the trap referenced an out-of-scope variable once main
+# returned; under `set -u` that raised "unbound variable" at exit and made the
+# script exit non-zero even on a successful install. The ${tmpdir:-} guard
+# keeps the trap safe if we exit before tmpdir is assigned.
+tmpdir=""
+trap 'rm -rf "${tmpdir:-}"' EXIT
+
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==>\033[0m %s\n' "$*" >&2; }
 err()  { printf '\033[1;31m==>\033[0m %s\n' "$*" >&2; exit 1; }
@@ -126,7 +134,7 @@ install_binary() {
 }
 
 main() {
-  local os arch version asset_url tmpdir gz_path bin_path dest_dir
+  local os arch version asset_url gz_path bin_path dest_dir
   os="$(detect_os)"
   arch="$(detect_arch)"
   version="$(resolve_version)"
@@ -136,7 +144,6 @@ main() {
   log "Asset: ${asset_url}"
 
   tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
 
   gz_path="${tmpdir}/a2acli.gz"
   bin_path="${tmpdir}/a2acli"
