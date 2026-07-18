@@ -19,11 +19,6 @@ REPO="kynoproj/a2acli"
 BINARY_NAME="${BINARY_NAME:-a2acli}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
-# tmpdir and its EXIT trap live at script scope, not local to main(). As a
-# main()-local, the trap referenced an out-of-scope variable once main
-# returned; under `set -u` that raised "unbound variable" at exit and made the
-# script exit non-zero even on a successful install. The ${tmpdir:-} guard
-# keeps the trap safe if we exit before tmpdir is assigned.
 tmpdir=""
 trap 'rm -rf "${tmpdir:-}"' EXIT
 
