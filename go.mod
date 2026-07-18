@@ -6,7 +6,7 @@ require (
 	github.com/a2aproject/a2a-go/v2 v2.3.1
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.45.0
-	google.golang.org/grpc v1.82.0
+	google.golang.org/grpc v1.82.1
 )
 
 require (
