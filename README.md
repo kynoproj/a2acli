@@ -62,6 +62,7 @@ Global flags:
   -v, --verbose                Log request URL, request body, and response body to stderr
       --override-host string   Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)
       --endpoint string        Direct endpoint URL for the chosen --protocol; bypasses the AgentCard fetch
+  -o, --output string          Output format: text or json (default text)
 
 send / stream flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
@@ -77,6 +78,18 @@ send / stream flags:
 The message source is chosen by precedence `--json` > `--parts` > `--file` >
 positional text; only one may be combined with positional text. `--task`/`--context`,
 when set, override any values carried in the chosen source.
+
+### Output format
+
+Every command that prints a result honors `-o/--output`:
+
+- `text` (default) — a compact, human-readable rendering of cards, tasks,
+  messages, and streamed events.
+- `json` — the raw A2A protocol objects as indented JSON, for scripting.
+
+> **Breaking change:** the default is now `text`. Previous releases always
+> emitted JSON. Add `-o json` (or `--output json`) to any command that feeds a
+> JSON parser — for example `a2acli task get -o json <id> | jq .`.
 
 ### Environment
 
@@ -127,8 +140,9 @@ a2acli send -u http://127.0.0.1:9001 \
   "Summarize this"
 ```
 
-Continue an existing task or conversation. Take the `taskId`/`contextId`
-returned by a prior `send`/`stream` and pass them to the next turn:
+Continue an existing task or conversation. Take the task ID / context ID
+returned by a prior `send`/`stream` (shown as `Task:`/`Context:` in text output,
+or `taskId`/`contextId` under `-o json`) and pass them to the next turn:
 
 ```bash
 a2acli send -u http://127.0.0.1:9001 --task <task-id> "And translate it to French"
@@ -163,15 +177,15 @@ Address a tenant on multi-tenant agents:
 a2acli send -u https://agent.example.com --tenant acme "Hello"
 ```
 
-Trace traffic with `-v` (verbose output goes to stderr, so JSON output on stdout
-stays pipeable):
+Trace traffic with `-v` (verbose output goes to stderr, so the command's stdout
+output stays pipeable):
 
 ```bash
 a2acli -v send -u http://127.0.0.1:9001 "Hello"
 # → AgentCard http://127.0.0.1:9001/.well-known/agent-card.json
 # ← AgentCard http://127.0.0.1:9001
 # → SendMessage http://127.0.0.1:9001
-#   request:  {"message":{"role":"ROLE_USER","content":[{"type":"text","text":"Hello"}]}}
+#   request:  {"messageId":"...","parts":[{"text":"Hello"}],"role":"ROLE_USER"}
 # ← SendMessage http://127.0.0.1:9001
 #   response: {...}
 ```

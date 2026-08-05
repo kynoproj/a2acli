@@ -41,7 +41,7 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printJSON(cmd.OutOrStdout(), resp)
+			return opts.renderSendResult(cmd.OutOrStdout(), resp)
 		},
 	}
 	f := cmd.Flags()

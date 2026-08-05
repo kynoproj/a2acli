@@ -39,7 +39,7 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 				if iterErr != nil {
 					return iterErr
 				}
-				if err := printJSON(out, event); err != nil {
+				if err := opts.renderEvent(out, event); err != nil {
 					return err
 				}
 			}

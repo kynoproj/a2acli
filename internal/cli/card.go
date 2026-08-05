@@ -45,7 +45,7 @@ func newCardCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printJSON(cmd.OutOrStdout(), card)
+			return opts.renderCard(cmd.OutOrStdout(), card)
 		},
 	}
 }
