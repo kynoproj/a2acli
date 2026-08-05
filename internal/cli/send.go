@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
@@ -15,17 +14,13 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 		returnImmediately bool
 		taskID            string
 		contextID         string
+		file              string
 	)
 	cmd := &cobra.Command{
 		Use:   "send [text]",
 		Short: "Send a one-shot message to the agent and print the response",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  messageArgs(&file),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			text := joinArgs(args)
-			if text == "" {
-				return errors.New("message text is empty")
-			}
-
 			ctx := cmd.Context()
 			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
 			if err != nil {
@@ -33,7 +28,10 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 			}
 			defer func() { _ = client.Destroy() }()
 
-			msg := buildUserMessage(text, taskID, contextID)
+			msg, err := buildMessage(joinArgs(args), file, taskID, contextID)
+			if err != nil {
+				return err
+			}
 			req := &a2a.SendMessageRequest{Tenant: opts.tenant, Message: msg}
 			if cfg := buildSendConfig(cmd, accept, historyLength, returnImmediately); cfg != nil {
 				req.Config = cfg
@@ -51,6 +49,7 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 	f.BoolVar(&returnImmediately, "return-immediately", false, "Return as soon as the task is created instead of waiting for completion")
 	f.StringVar(&taskID, "task", "", "Task ID to continue an existing task")
 	f.StringVar(&contextID, "context", "", "Context ID to associate the message with an existing conversation")
+	f.StringVarP(&file, "file", "f", "", "Read the message from a JSON file (an a2a.Message object) instead of positional text")
 	return cmd
 }
 

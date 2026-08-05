@@ -113,16 +113,8 @@ const messageResultJSON = `{"message":{"role":"ROLE_AGENT","messageId":"m-1","co
 // TestSendTaskContextReachWire asserts --task/--context reach the wire for the
 // non-streaming `send` command so a2acli can continue an existing task.
 func TestSendTaskContextReachWire(t *testing.T) {
-	newServer := func(bodyCh chan<- []byte) *httptest.Server {
-		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body, _ := io.ReadAll(r.Body)
-			bodyCh <- body
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":"1","result":` + messageResultJSON + `}`))
-		}))
-	}
 	for _, tt := range wireCases() {
-		t.Run(tt.name, func(t *testing.T) { runWireCase(t, "send", tt, newServer) })
+		t.Run(tt.name, func(t *testing.T) { runWireCase(t, "send", tt, jsonrpcServer) })
 	}
 }
 
