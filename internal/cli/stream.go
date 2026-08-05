@@ -11,6 +11,8 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 	var (
 		accept        []string
 		historyLength int
+		taskID        string
+		contextID     string
 	)
 	cmd := &cobra.Command{
 		Use:   "stream [text]",
@@ -29,7 +31,7 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 			}
 			defer func() { _ = client.Destroy() }()
 
-			msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart(text))
+			msg := buildUserMessage(text, taskID, contextID)
 			req := &a2a.SendMessageRequest{Tenant: opts.tenant, Message: msg}
 			if cfg := buildSendConfig(cmd, accept, historyLength, false); cfg != nil {
 				req.Config = cfg
@@ -49,5 +51,7 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 	f := cmd.Flags()
 	f.StringSliceVar(&accept, "accept", nil, "Accepted output MIME types (repeatable or comma-separated)")
 	f.IntVar(&historyLength, "history-length", 0, "Number of history messages to include in events")
+	f.StringVar(&taskID, "task", "", "Task ID to continue an existing task")
+	f.StringVar(&contextID, "context", "", "Context ID to associate the message with an existing conversation")
 	return cmd
 }
