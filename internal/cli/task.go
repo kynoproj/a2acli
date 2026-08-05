@@ -41,7 +41,7 @@ func newTaskGetCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printJSON(cmd.OutOrStdout(), task)
+			return opts.renderTask(cmd.OutOrStdout(), task)
 		},
 	}
 	cmd.Flags().IntVar(&historyLength, "history-length", 0, "Maximum number of history messages to retrieve")
@@ -83,7 +83,7 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printJSON(cmd.OutOrStdout(), resp)
+			return opts.renderTaskList(cmd.OutOrStdout(), resp)
 		},
 	}
 	f := cmd.Flags()
@@ -113,7 +113,7 @@ func newTaskCancelCommand(opts *globalOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printJSON(cmd.OutOrStdout(), task)
+			return opts.renderTask(cmd.OutOrStdout(), task)
 		},
 	}
 }
@@ -137,7 +137,7 @@ func newTaskSubscribeCommand(opts *globalOptions) *cobra.Command {
 				if iterErr != nil {
 					return iterErr
 				}
-				if err := printJSON(out, event); err != nil {
+				if err := opts.renderEvent(out, event); err != nil {
 					return err
 				}
 			}
