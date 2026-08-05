@@ -69,6 +69,7 @@ send / stream flags:
       --return-immediately     (send) Return as soon as the task is created
       --task string            Task ID to continue an existing task
       --context string         Context ID to associate the message with an existing conversation
+  -f, --file string            Read the message from a JSON file (an a2a.Message object) instead of positional text
 ```
 
 ### Environment
@@ -126,6 +127,19 @@ returned by a prior `send`/`stream` and pass them to the next turn:
 ```bash
 a2acli send -u http://127.0.0.1:9001 --task <task-id> "And translate it to French"
 a2acli send -u http://127.0.0.1:9001 --context <context-id> "What did I just ask?"
+```
+
+Send a message from a file. The file holds a JSON `a2a.Message` object, which
+lets you send multi-part or non-text messages that positional text can't express
+(a missing `messageId` is generated automatically). `--task`/`--context`, when
+set, override any values in the file:
+
+```bash
+cat > message.json <<'EOF'
+{ "role": "ROLE_USER", "parts": [{ "text": "Describe this diagram" }] }
+EOF
+a2acli send -u http://127.0.0.1:9001 -f message.json
+a2acli stream -u http://127.0.0.1:9001 -f message.json --task <task-id>
 ```
 
 Address a tenant on multi-tenant agents:
