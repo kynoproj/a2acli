@@ -19,7 +19,7 @@ func writeTempFile(t *testing.T, content string) string {
 }
 
 func TestBuildMessageText(t *testing.T) {
-	msg, err := buildMessage("hello world", "", "task-1", "ctx-1")
+	msg, err := buildMessage(messageSources{text: "hello world"}, "task-1", "ctx-1")
 	if err != nil {
 		t.Fatalf("buildMessage: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestBuildMessageText(t *testing.T) {
 func TestBuildMessageFile(t *testing.T) {
 	t.Run("full-message-from-file", func(t *testing.T) {
 		path := writeTempFile(t, `{"role":"ROLE_USER","messageId":"m-file","parts":[{"text":"from file"}]}`)
-		msg, err := buildMessage("", path, "", "")
+		msg, err := buildMessage(messageSources{file: path}, "", "")
 		if err != nil {
 			t.Fatalf("buildMessage: %v", err)
 		}
@@ -54,7 +54,7 @@ func TestBuildMessageFile(t *testing.T) {
 
 	t.Run("missing-messageId-is-generated", func(t *testing.T) {
 		path := writeTempFile(t, `{"role":"ROLE_USER","parts":[{"text":"hi"}]}`)
-		msg, err := buildMessage("", path, "", "")
+		msg, err := buildMessage(messageSources{file: path}, "", "")
 		if err != nil {
 			t.Fatalf("buildMessage: %v", err)
 		}
@@ -66,7 +66,7 @@ func TestBuildMessageFile(t *testing.T) {
 	t.Run("flags-override-file-task-context", func(t *testing.T) {
 		// File carries its own taskId/contextId; --task/--context must win.
 		path := writeTempFile(t, `{"role":"ROLE_USER","messageId":"m-1","taskId":"file-task","contextId":"file-ctx","parts":[{"text":"hi"}]}`)
-		msg, err := buildMessage("", path, "flag-task", "flag-ctx")
+		msg, err := buildMessage(messageSources{file: path}, "flag-task", "flag-ctx")
 		if err != nil {
 			t.Fatalf("buildMessage: %v", err)
 		}
@@ -80,7 +80,7 @@ func TestBuildMessageFile(t *testing.T) {
 
 	t.Run("file-task-context-preserved-when-flags-unset", func(t *testing.T) {
 		path := writeTempFile(t, `{"role":"ROLE_USER","messageId":"m-1","taskId":"file-task","contextId":"file-ctx","parts":[{"text":"hi"}]}`)
-		msg, err := buildMessage("", path, "", "")
+		msg, err := buildMessage(messageSources{file: path}, "", "")
 		if err != nil {
 			t.Fatalf("buildMessage: %v", err)
 		}
@@ -95,13 +95,13 @@ func TestBuildMessageFile(t *testing.T) {
 
 func TestBuildMessageErrors(t *testing.T) {
 	t.Run("no-source", func(t *testing.T) {
-		if _, err := buildMessage("", "", "", ""); err == nil {
+		if _, err := buildMessage(messageSources{}, "", ""); err == nil {
 			t.Error("expected error when neither text nor file is provided")
 		}
 	})
 
 	t.Run("unreadable-file", func(t *testing.T) {
-		_, err := buildMessage("", "/nonexistent/does-not-exist.json", "", "")
+		_, err := buildMessage(messageSources{file: "/nonexistent/does-not-exist.json"}, "", "")
 		if err == nil {
 			t.Error("expected error for unreadable file")
 		}
@@ -109,7 +109,7 @@ func TestBuildMessageErrors(t *testing.T) {
 
 	t.Run("invalid-json", func(t *testing.T) {
 		path := writeTempFile(t, `{not valid json`)
-		if _, err := buildMessage("", path, "", ""); err == nil {
+		if _, err := buildMessage(messageSources{file: path}, "", ""); err == nil {
 			t.Error("expected error for invalid JSON in file")
 		}
 	})

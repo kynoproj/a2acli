@@ -14,12 +14,12 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 		returnImmediately bool
 		taskID            string
 		contextID         string
-		file              string
+		src               messageSources
 	)
 	cmd := &cobra.Command{
 		Use:   "send [text]",
 		Short: "Send a one-shot message to the agent and print the response",
-		Args:  messageArgs(&file),
+		Args:  messageArgs(&src),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
@@ -28,7 +28,8 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 			}
 			defer func() { _ = client.Destroy() }()
 
-			msg, err := buildMessage(joinArgs(args), file, taskID, contextID)
+			src.text = joinArgs(args)
+			msg, err := buildMessage(src, taskID, contextID)
 			if err != nil {
 				return err
 			}
@@ -49,7 +50,7 @@ func newSendCommand(opts *globalOptions) *cobra.Command {
 	f.BoolVar(&returnImmediately, "return-immediately", false, "Return as soon as the task is created instead of waiting for completion")
 	f.StringVar(&taskID, "task", "", "Task ID to continue an existing task")
 	f.StringVar(&contextID, "context", "", "Context ID to associate the message with an existing conversation")
-	f.StringVarP(&file, "file", "f", "", "Read the message from a JSON file (an a2a.Message object) instead of positional text")
+	registerMessageSourceFlags(f, &src)
 	return cmd
 }
 

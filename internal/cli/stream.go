@@ -11,12 +11,12 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 		historyLength int
 		taskID        string
 		contextID     string
-		file          string
+		src           messageSources
 	)
 	cmd := &cobra.Command{
 		Use:   "stream [text]",
 		Short: "Send a message and stream events as they arrive",
-		Args:  messageArgs(&file),
+		Args:  messageArgs(&src),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			client, _, err := dial(ctx, opts, cmd.ErrOrStderr())
@@ -25,7 +25,8 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 			}
 			defer func() { _ = client.Destroy() }()
 
-			msg, err := buildMessage(joinArgs(args), file, taskID, contextID)
+			src.text = joinArgs(args)
+			msg, err := buildMessage(src, taskID, contextID)
 			if err != nil {
 				return err
 			}
@@ -50,6 +51,6 @@ func newStreamCommand(opts *globalOptions) *cobra.Command {
 	f.IntVar(&historyLength, "history-length", 0, "Number of history messages to include in events")
 	f.StringVar(&taskID, "task", "", "Task ID to continue an existing task")
 	f.StringVar(&contextID, "context", "", "Context ID to associate the message with an existing conversation")
-	f.StringVarP(&file, "file", "f", "", "Read the message from a JSON file (an a2a.Message object) instead of positional text")
+	registerMessageSourceFlags(f, &src)
 	return cmd
 }

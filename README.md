@@ -70,7 +70,13 @@ send / stream flags:
       --task string            Task ID to continue an existing task
       --context string         Context ID to associate the message with an existing conversation
   -f, --file string            Read the message from a JSON file (an a2a.Message object) instead of positional text
+      --json string            Raw JSON a2a.Message object to send instead of positional text
+      --parts string           Raw JSON array of content parts to send as a user message
 ```
+
+The message source is chosen by precedence `--json` > `--parts` > `--file` >
+positional text; only one may be combined with positional text. `--task`/`--context`,
+when set, override any values carried in the chosen source.
 
 ### Environment
 
@@ -140,6 +146,15 @@ cat > message.json <<'EOF'
 EOF
 a2acli send -u http://127.0.0.1:9001 -f message.json
 a2acli stream -u http://127.0.0.1:9001 -f message.json --task <task-id>
+```
+
+Pass a message inline as raw JSON, either a full `a2a.Message` (`--json`) or just
+its content parts (`--parts`, wrapped in a user message for you):
+
+```bash
+a2acli send -u http://127.0.0.1:9001 \
+  --json '{"role":"ROLE_USER","parts":[{"text":"Hello"}]}'
+a2acli send -u http://127.0.0.1:9001 --parts '[{"text":"one"},{"text":"two"}]'
 ```
 
 Address a tenant on multi-tenant agents:
