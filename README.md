@@ -67,6 +67,8 @@ send / stream flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
       --history-length int     Number of history messages to include in the response
       --return-immediately     (send) Return as soon as the task is created
+      --task string            Task ID to continue an existing task
+      --context string         Context ID to associate the message with an existing conversation
 ```
 
 ### Environment
@@ -116,6 +118,14 @@ Constrain the response with `SendMessageConfig` knobs:
 a2acli send -u http://127.0.0.1:9001 \
   --accept application/json --history-length 5 --return-immediately \
   "Summarize this"
+```
+
+Continue an existing task or conversation. Take the `taskId`/`contextId`
+returned by a prior `send`/`stream` and pass them to the next turn:
+
+```bash
+a2acli send -u http://127.0.0.1:9001 --task <task-id> "And translate it to French"
+a2acli send -u http://127.0.0.1:9001 --context <context-id> "What did I just ask?"
 ```
 
 Address a tenant on multi-tenant agents:
