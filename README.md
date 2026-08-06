@@ -128,9 +128,15 @@ Inspect a task:
 ```bash
 a2acli task get -u http://127.0.0.1:9001 <task-id>
 a2acli task list -u http://127.0.0.1:9001 --status working
+a2acli task list -u http://127.0.0.1:9001 --since 2026-08-01T00:00:00Z
 a2acli task cancel -u http://127.0.0.1:9001 <task-id>
 a2acli task subscribe -u http://127.0.0.1:9001 <task-id>
 ```
+
+`task list --status` takes the short state names (`submitted`, `working`,
+`completed`, `failed`, `canceled`, `rejected`, `input-required`,
+`auth-required`); `--since` takes an RFC 3339 timestamp and lists only tasks with
+status updates after it.
 
 Constrain the response with `SendMessageConfig` knobs:
 

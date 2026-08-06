@@ -24,6 +24,34 @@ func TestShortState(t *testing.T) {
 	}
 }
 
+func TestParseTaskState(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		want    a2a.TaskState
+		wantErr bool
+	}{
+		{"working", "working", a2a.TaskStateWorking, false},
+		{"completed", "completed", a2a.TaskStateCompleted, false},
+		{"input-required", "input-required", a2a.TaskStateInputRequired, false},
+		{"mixed-case", "Working", a2a.TaskStateWorking, false},
+		{"surrounding-space", "  completed  ", a2a.TaskStateCompleted, false},
+		{"unknown", "bogus", "", true},
+		{"empty", "", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseTaskState(tt.in)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("parseTaskState(%q) err = %v, wantErr = %v", tt.in, err, tt.wantErr)
+			}
+			if got != tt.want {
+				t.Errorf("parseTaskState(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestPartsText(t *testing.T) {
 	tests := []struct {
 		name  string

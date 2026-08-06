@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -25,6 +26,16 @@ var taskStateNames = map[a2a.TaskState]string{
 	a2a.TaskStateAuthRequired:  "auth-required",
 }
 
+// taskStatesByName is the inverse of taskStateNames, built once for O(1)
+// short-name lookups in parseTaskState.
+var taskStatesByName = func() map[string]a2a.TaskState {
+	m := make(map[string]a2a.TaskState, len(taskStateNames))
+	for state, name := range taskStateNames {
+		m[name] = state
+	}
+	return m
+}()
+
 // shortState returns the human-readable name for a task state, falling back to
 // the raw state string when unknown.
 func shortState(state a2a.TaskState) string {
@@ -32,6 +43,28 @@ func shortState(state a2a.TaskState) string {
 		return name
 	}
 	return string(state)
+}
+
+// parseTaskState maps a human-readable state name (e.g. "working") to its A2A
+// wire TaskState (e.g. TASK_STATE_WORKING). Input is trimmed and lowercased. It
+// is the inverse of taskStateNames and returns an error for unknown names.
+func parseTaskState(s string) (a2a.TaskState, error) {
+	name := strings.ToLower(strings.TrimSpace(s))
+	if state, ok := taskStatesByName[name]; ok {
+		return state, nil
+	}
+	return "", fmt.Errorf("unknown task state %q: expected one of %s", s, strings.Join(taskStateNameList(), ", "))
+}
+
+// taskStateNameList returns the known short state names, sorted for stable
+// error messages.
+func taskStateNameList() []string {
+	names := make([]string, 0, len(taskStateNames))
+	for _, n := range taskStateNames {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func formatCard(card *a2a.AgentCard) string {
