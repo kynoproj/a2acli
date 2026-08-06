@@ -1,6 +1,9 @@
 package cli
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/spf13/cobra"
 )
@@ -56,6 +59,7 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 		pageToken        string
 		historyLength    int
 		includeArtifacts bool
+		since            string
 	)
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -71,13 +75,26 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 			req := &a2a.ListTasksRequest{
 				Tenant:           opts.tenant,
 				ContextID:        contextID,
-				Status:           a2a.TaskState(status),
 				PageSize:         pageSize,
 				PageToken:        pageToken,
 				IncludeArtifacts: includeArtifacts,
 			}
+			if status != "" {
+				state, err := parseTaskState(status)
+				if err != nil {
+					return err
+				}
+				req.Status = state
+			}
 			if cmd.Flags().Changed("history-length") {
 				req.HistoryLength = &historyLength
+			}
+			if since != "" {
+				t, err := time.Parse(time.RFC3339, since)
+				if err != nil {
+					return fmt.Errorf("invalid --since %q: %w", since, err)
+				}
+				req.StatusTimestampAfter = &t
 			}
 			resp, err := client.ListTasks(ctx, req)
 			if err != nil {
@@ -93,6 +110,7 @@ func newTaskListCommand(opts *globalOptions) *cobra.Command {
 	f.StringVar(&pageToken, "page-token", "", "Page token from a previous response")
 	f.IntVar(&historyLength, "history-length", 0, "History messages to include per task")
 	f.BoolVar(&includeArtifacts, "include-artifacts", false, "Include task artifacts in the response")
+	f.StringVar(&since, "since", "", "Only list tasks with status updates after this RFC 3339 timestamp")
 	return cmd
 }
 
