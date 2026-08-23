@@ -57,11 +57,12 @@ Global flags:
       --plaintext              Disable TLS entirely (gRPC only)
       --tenant string          Optional agent-owner tenant ID applied to every request
       --timeout duration       HTTP timeout (default 30s)
-  -H, --header stringArray     Extra HTTP header for the agent-card request (repeatable)
+  -H, --header stringArray     Extra header to send with every request, including the agent-card fetch and protocol calls (repeatable)
   -v, --verbose                Log request URL, request body, and response body to stderr
       --override-host string   Override the host[:port] of every URL in the resolved AgentCard (e.g. 127.0.0.1:9001)
       --endpoint string        Direct endpoint URL for the chosen --protocol; bypasses the AgentCard fetch
   -o, --output string          Output format: text or json (default text)
+      --no-color               Disable ANSI colors in terminal output (also honors $NO_COLOR)
 
 send flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
@@ -74,15 +75,31 @@ send flags:
       --parts string           Raw JSON array of content parts to send as a user message
       --stream                 Stream events as they arrive instead of waiting for the final response
       --polling-interval duration   (--stream) Duration between GetTask requests when falling back to polling (default 5s)
+
+task get flags:
+      --history-length int     Maximum number of history messages to retrieve
+
+task list flags:
+      --context-id string      Filter by context ID
+      --status string          Filter by task state (e.g. submitted, working, completed)
+      --page-size int          Max tasks per page (1-100, server default if 0)
+      --page-token string      Page token from a previous response
+      --history-length int     History messages to include per task
+      --include-artifacts      Include task artifacts in the response
+      --since string           Only list tasks with status updates after this RFC 3339 timestamp
+
+version flags:
+      --short                  Print only the version string
 ```
 
 The message source is chosen by precedence `--json` > `--parts` > `--file` >
-positional text; only one may be combined with positional text. `--task`/`--context`,
-when set, override any values carried in the chosen source.
+positional text; only one may be combined with positional text.
+`--task`/`--context`, when set, override any values carried in the chosen
+source.
 
-`--stream` always attempts real streaming first. If the agent's AgentCard doesn't
-advertise streaming support (or the attempt fails for the same reason), it
-falls back to polling `GetTask` every `--polling-interval` and synthesizes
+`--stream` always attempts real streaming first. If the agent's AgentCard
+doesn't advertise streaming support (or the attempt fails for the same reason),
+it falls back to polling `GetTask` every `--polling-interval` and synthesizes
 streaming-like events from the task's state changes.
 
 ### Output format
@@ -102,6 +119,7 @@ Every command that prints a result honors `-o/--output`:
 | Variable     | Effect                                                                              |
 | ------------ | ----------------------------------------------------------------------------------- |
 | `A2A_SERVER` | Default for `--url` when the flag is not provided. The flag, when set, always wins. |
+| `NO_COLOR`   | Disables ANSI colors in terminal output, same as `--no-color`.                      |
 
 ```bash
 export A2A_SERVER=http://127.0.0.1:9001
@@ -141,8 +159,8 @@ a2acli task subscribe -u http://127.0.0.1:9001 <task-id>
 
 `task list --status` takes the short state names (`submitted`, `working`,
 `completed`, `failed`, `canceled`, `rejected`, `input-required`,
-`auth-required`); `--since` takes an RFC 3339 timestamp and lists only tasks with
-status updates after it.
+`auth-required`); `--since` takes an RFC 3339 timestamp and lists only tasks
+with status updates after it.
 
 Constrain the response with `SendMessageConfig` knobs:
 
@@ -153,8 +171,8 @@ a2acli send -u http://127.0.0.1:9001 \
 ```
 
 Continue an existing task or conversation. Take the task ID / context ID
-returned by a prior `send` (shown as `Task:`/`Context:` in text output,
-or `taskId`/`contextId` under `-o json`) and pass them to the next turn:
+returned by a prior `send` (shown as `Task:`/`Context:` in text output, or
+`taskId`/`contextId` under `-o json`) and pass them to the next turn:
 
 ```bash
 a2acli send -u http://127.0.0.1:9001 --task <task-id> "And translate it to French"
@@ -174,8 +192,8 @@ a2acli send -u http://127.0.0.1:9001 -f message.json
 a2acli send --stream -u http://127.0.0.1:9001 -f message.json --task <task-id>
 ```
 
-Pass a message inline as raw JSON, either a full `a2a.Message` (`--json`) or just
-its content parts (`--parts`, wrapped in a user message for you):
+Pass a message inline as raw JSON, either a full `a2a.Message` (`--json`) or
+just its content parts (`--parts`, wrapped in a user message for you):
 
 ```bash
 a2acli send -u http://127.0.0.1:9001 \
@@ -234,10 +252,10 @@ advertises an internal address but you've port-forwarded it locally):
 a2acli send -u http://agent.internal -p grpc --plaintext --override-host 127.0.0.1:9001 "Hello"
 ```
 
-Bypass the AgentCard entirely with `--endpoint`. Use this when the server
-either does not expose `/.well-known/agent-card.json`, or its AgentCard is
-missing or misreports `supportedInterfaces` — `a2acli` will skip resolution
-and connect straight to the endpoint you supply with the chosen `--protocol`:
+Bypass the AgentCard entirely with `--endpoint`. Use this when the server either
+does not expose `/.well-known/agent-card.json`, or its AgentCard is missing or
+misreports `supportedInterfaces` — `a2acli` will skip resolution and connect
+straight to the endpoint you supply with the chosen `--protocol`:
 
 ```bash
 # JSON-RPC over HTTP
