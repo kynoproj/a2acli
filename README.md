@@ -73,11 +73,17 @@ send / stream flags:
   -f, --file string            Read the message from a JSON file (an a2a.Message object) instead of positional text
       --json string            Raw JSON a2a.Message object to send instead of positional text
       --parts string           Raw JSON array of content parts to send as a user message
+      --polling-interval duration   (stream) Duration between GetTask requests when falling back to polling (default 5s)
 ```
 
 The message source is chosen by precedence `--json` > `--parts` > `--file` >
 positional text; only one may be combined with positional text. `--task`/`--context`,
 when set, override any values carried in the chosen source.
+
+`stream` always attempts real streaming first. If the agent's AgentCard doesn't
+advertise streaming support (or the attempt fails for the same reason), it
+falls back to polling `GetTask` every `--polling-interval` and synthesizes
+streaming-like events from the task's state changes.
 
 ### Output format
 
