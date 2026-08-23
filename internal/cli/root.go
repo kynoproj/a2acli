@@ -72,7 +72,6 @@ func NewRootCommand(info VersionInfo) *cobra.Command {
 	root.AddCommand(
 		newCardCommand(opts),
 		newSendCommand(opts),
-		newStreamCommand(opts),
 		newTaskCommand(opts),
 		newVersionCommand(info),
 	)
