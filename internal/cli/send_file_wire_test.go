@@ -153,13 +153,13 @@ func TestSendFileReachWire(t *testing.T) {
 		root.SetOut(&out)
 		root.SetErr(&errBuf)
 		root.SetArgs([]string{
-			"stream",
+			"send", "--stream",
 			"--endpoint", srv.URL,
 			"--protocol", "jsonrpc",
 			"-f", path,
 		})
 		if err := root.Execute(); err != nil {
-			t.Fatalf("stream -f failed: %v (stderr=%q)", err, errBuf.String())
+			t.Fatalf("send --stream -f failed: %v (stderr=%q)", err, errBuf.String())
 		}
 
 		raw := <-bodyCh

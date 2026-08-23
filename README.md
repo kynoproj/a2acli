@@ -43,8 +43,7 @@ a2acli [command]
 
 Commands:
   card             Fetch and print the AgentCard
-  send             Send a one-shot message and print the response
-  stream           Send a message and stream events as they arrive
+  send             Send a message to the agent and print the response
   task get         Fetch a task by ID
   task list        List tasks
   task cancel      Cancel a task by ID
@@ -64,23 +63,24 @@ Global flags:
       --endpoint string        Direct endpoint URL for the chosen --protocol; bypasses the AgentCard fetch
   -o, --output string          Output format: text or json (default text)
 
-send / stream flags:
+send flags:
       --accept strings         Accepted output MIME types (repeatable or comma-separated)
       --history-length int     Number of history messages to include in the response
-      --return-immediately     (send) Return as soon as the task is created
+      --return-immediately     Return as soon as the task is created instead of waiting for completion (incompatible with --stream)
       --task string            Task ID to continue an existing task
       --context string         Context ID to associate the message with an existing conversation
   -f, --file string            Read the message from a JSON file (an a2a.Message object) instead of positional text
       --json string            Raw JSON a2a.Message object to send instead of positional text
       --parts string           Raw JSON array of content parts to send as a user message
-      --polling-interval duration   (stream) Duration between GetTask requests when falling back to polling (default 5s)
+      --stream                 Stream events as they arrive instead of waiting for the final response
+      --polling-interval duration   (--stream) Duration between GetTask requests when falling back to polling (default 5s)
 ```
 
 The message source is chosen by precedence `--json` > `--parts` > `--file` >
 positional text; only one may be combined with positional text. `--task`/`--context`,
 when set, override any values carried in the chosen source.
 
-`stream` always attempts real streaming first. If the agent's AgentCard doesn't
+`--stream` always attempts real streaming first. If the agent's AgentCard doesn't
 advertise streaming support (or the attempt fails for the same reason), it
 falls back to polling `GetTask` every `--polling-interval` and synthesizes
 streaming-like events from the task's state changes.
@@ -126,7 +126,7 @@ a2acli send -u http://127.0.0.1:9001 "Hello, what can you do?"
 Stream a message and watch task updates:
 
 ```bash
-a2acli stream -u http://127.0.0.1:9001 "Summarize the latest news"
+a2acli send --stream -u http://127.0.0.1:9001 "Summarize the latest news"
 ```
 
 Inspect a task:
@@ -153,7 +153,7 @@ a2acli send -u http://127.0.0.1:9001 \
 ```
 
 Continue an existing task or conversation. Take the task ID / context ID
-returned by a prior `send`/`stream` (shown as `Task:`/`Context:` in text output,
+returned by a prior `send` (shown as `Task:`/`Context:` in text output,
 or `taskId`/`contextId` under `-o json`) and pass them to the next turn:
 
 ```bash
@@ -171,7 +171,7 @@ cat > message.json <<'EOF'
 { "role": "ROLE_USER", "parts": [{ "text": "Describe this diagram" }] }
 EOF
 a2acli send -u http://127.0.0.1:9001 -f message.json
-a2acli stream -u http://127.0.0.1:9001 -f message.json --task <task-id>
+a2acli send --stream -u http://127.0.0.1:9001 -f message.json --task <task-id>
 ```
 
 Pass a message inline as raw JSON, either a full `a2a.Message` (`--json`) or just

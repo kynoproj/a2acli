@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io"
 	"iter"
 	"time"
 
@@ -101,4 +102,18 @@ func handlePolling(ctx context.Context, client *a2aclient.Client, original *a2a.
 			prevState = task
 		}
 	}
+}
+
+// renderEvents drains an event iterator, rendering each event via opts until
+// the iterator is exhausted or yields an error.
+func renderEvents(opts *globalOptions, out io.Writer, events iter.Seq2[a2a.Event, error]) error {
+	for event, err := range events {
+		if err != nil {
+			return err
+		}
+		if err := opts.renderEvent(out, event); err != nil {
+			return err
+		}
+	}
+	return nil
 }

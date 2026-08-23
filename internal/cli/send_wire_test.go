@@ -43,11 +43,12 @@ func wireCases() []wireCase {
 	}
 }
 
-// runWireCase drives the given command through an httptest server built by
-// newServer, captures the outbound request body, and asserts that --task and
-// --context land on the outbound Message (as taskId/contextId) and are omitted
-// from the wire entirely when unset.
-func runWireCase(t *testing.T, command string, tt wireCase, newServer func(bodyCh chan<- []byte) *httptest.Server) {
+// runWireCase drives `send` (optionally with extraArgs, e.g. "--stream")
+// through an httptest server built by newServer, captures the outbound
+// request body, and asserts that --task and --context land on the outbound
+// Message (as taskId/contextId) and are omitted from the wire entirely when
+// unset.
+func runWireCase(t *testing.T, tt wireCase, newServer func(bodyCh chan<- []byte) *httptest.Server, extraArgs ...string) {
 	t.Helper()
 
 	bodyCh := make(chan []byte, 1)
@@ -59,22 +60,23 @@ func runWireCase(t *testing.T, command string, tt wireCase, newServer func(bodyC
 	root.SetOut(&out)
 	root.SetErr(&errBuf)
 	args := []string{
-		command, "hello",
+		"send", "hello",
 		"--endpoint", srv.URL,
 		"--protocol", "jsonrpc",
 	}
+	args = append(args, extraArgs...)
 	args = append(args, tt.args...)
 	root.SetArgs(args)
 
 	if err := root.Execute(); err != nil {
-		t.Fatalf("%s failed: %v (stderr=%q)", command, err, errBuf.String())
+		t.Fatalf("send failed: %v (stderr=%q)", err, errBuf.String())
 	}
 
 	var raw []byte
 	select {
 	case raw = <-bodyCh:
 	default:
-		t.Fatalf("server never received the %s request", command)
+		t.Fatalf("server never received the send request")
 	}
 
 	var env struct {
@@ -114,13 +116,13 @@ const messageResultJSON = `{"message":{"role":"ROLE_AGENT","messageId":"m-1","co
 // non-streaming `send` command so a2acli can continue an existing task.
 func TestSendTaskContextReachWire(t *testing.T) {
 	for _, tt := range wireCases() {
-		t.Run(tt.name, func(t *testing.T) { runWireCase(t, "send", tt, jsonrpcServer) })
+		t.Run(tt.name, func(t *testing.T) { runWireCase(t, tt, jsonrpcServer) })
 	}
 }
 
-// TestStreamTaskContextReachWire asserts the same for the streaming `stream`
-// command, whose response is delivered as a JSON-RPC-over-SSE event stream.
-func TestStreamTaskContextReachWire(t *testing.T) {
+// TestSendStreamTaskContextReachWire asserts the same for `send --stream`,
+// whose response is delivered as a JSON-RPC-over-SSE event stream.
+func TestSendStreamTaskContextReachWire(t *testing.T) {
 	newServer := func(bodyCh chan<- []byte) *httptest.Server {
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			body, _ := io.ReadAll(r.Body)
@@ -132,6 +134,6 @@ func TestStreamTaskContextReachWire(t *testing.T) {
 		}))
 	}
 	for _, tt := range wireCases() {
-		t.Run(tt.name, func(t *testing.T) { runWireCase(t, "stream", tt, newServer) })
+		t.Run(tt.name, func(t *testing.T) { runWireCase(t, tt, newServer, "--stream") })
 	}
 }

@@ -67,11 +67,11 @@ func pollingServer(t *testing.T) (srv *httptest.Server, getCalls *atomic.Int32) 
 	return httptest.NewServer(mux), getCalls
 }
 
-// TestStreamFallsBackToPollingWhenUnsupported drives `stream` against a
-// server whose AgentCard advertises capabilities.streaming=false and asserts
-// a2acli polls tasks/get instead of attempting an SSE stream, eventually
-// rendering the completed task.
-func TestStreamFallsBackToPollingWhenUnsupported(t *testing.T) {
+// TestSendStreamFallsBackToPollingWhenUnsupported drives `send --stream`
+// against a server whose AgentCard advertises capabilities.streaming=false
+// and asserts a2acli polls GetTask instead of attempting an SSE stream,
+// eventually rendering the completed task.
+func TestSendStreamFallsBackToPollingWhenUnsupported(t *testing.T) {
 	srv, getCalls := pollingServer(t)
 	defer srv.Close()
 
@@ -80,14 +80,14 @@ func TestStreamFallsBackToPollingWhenUnsupported(t *testing.T) {
 	root.SetOut(&out)
 	root.SetErr(&errBuf)
 	root.SetArgs([]string{
-		"stream", "hello",
+		"send", "--stream", "hello",
 		"--url", srv.URL,
 		"--protocol", "jsonrpc",
 		"--polling-interval", "1ms",
 	})
 
 	if err := root.Execute(); err != nil {
-		t.Fatalf("stream failed: %v (stderr=%q)", err, errBuf.String())
+		t.Fatalf("send --stream failed: %v (stderr=%q)", err, errBuf.String())
 	}
 
 	if !bytes.Contains(errBuf.Bytes(), []byte("falling back to polling")) {
